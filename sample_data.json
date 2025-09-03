@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "technical_skills": {
+      "skills": [
+        "Figma",
+        "NumPy",
+        "GitHub",
+        "Draw.io",
+        "Jira",
+        "Pandas"
+      ]
+    }
+  },
+  {
+    "name": "John Roe",
+    "email": "john@example.com",
+    "technical_skills": {
+      "skills": [
+        "Figma",
+        "GitHub",
+        "Jira"
+      ]
+    }
+  },
+  {
+    "name": "Alice Li",
+    "email": "alice@example.com",
+    "technical_skills": {
+      "skills": [
+        "NumPy",
+        "GitHub",
+        "Draw.io",
+        "Jira"
+      ]
+    }
+  },
+  {
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "technical_skills": {
+      "skills": [
+        "Figma",
+        "NumPy",
+        "GitHub",
+        "Draw.io",
+        "Jira"
+      ]
+    }
+  }
+]
