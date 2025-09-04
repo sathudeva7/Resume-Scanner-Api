@@ -1,46 +1,49 @@
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
+# --- Environment ---
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    DEBIAN_FRONTEND=noninteractive \
+    PORT=8080 \
+    WORKERS=4
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libmagic1 \
-    libmagic-dev \
+# --- System deps (runtime only) ---
+# libmagic1: for python-magic; curl: for HEALTHCHECK
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libmagic1 \
+      curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
+# --- App setup ---
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Cache-friendly: install Python deps first
 COPY requirements-minimal.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+ && pip install --no-cache-dir -r requirements-minimal.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements-minimal.txt
-
-# Copy application code
+# Copy code
 COPY app/ ./app/
+# Optional: bring in an example env file (avoid baking real secrets into images)
 COPY env.example .env
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Data dirs (e.g., uploads) with safe perms
+RUN mkdir -p /app/uploads
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
+# Non-root user
+RUN adduser --disabled-password --gecos '' appuser \
+ && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-ENV PORT=8080
+# --- Networking ---
 EXPOSE 8080
-CMD ["sh","-c","uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# --- Healthcheck ---
+# Uses $PORT so it works if you override the port at runtime
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
 
-# Run the application
-CMD gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT app.main:app
+# --- Run (Gunicorn with Uvicorn workers) ---
+# Use shell form so env vars like ${PORT} expand.
+CMD sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT}'-b 0.0.0.0:${PORT} app.main:app'
