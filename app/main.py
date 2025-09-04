@@ -83,7 +83,7 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:5173",
-    "https://capable-pika-72db40.netlify.app"
+    "https://capable-pika-72db40.netlify.app/*"
 ]
 
 app.add_middleware(
