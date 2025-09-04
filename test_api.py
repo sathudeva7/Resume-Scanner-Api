@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 # Configuration
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "http://localhost:8080"
 TEST_FILE_PATH = "sample_resume.txt"
 
 def create_test_resume():
