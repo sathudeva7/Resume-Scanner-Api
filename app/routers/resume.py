@@ -9,11 +9,12 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from app.models.api import (
     UploadResponse, ExtractionRequest, ExtractionResponse, JobStatusResponse,
     BatchScreeningRequest, BatchScreeningResponse, ResumeListResponse,
-    BulkUploadResponse, ErrorResponse
+    BulkUploadResponse, ErrorResponse, TemplateGenerationRequest
 )
 from app.models.resume import ResumeExtractionJob, ScreeningCriteria, Resume
 from app.services.extraction import get_extraction_service, LlamaExtractionService
 from app.services.template_manager import get_template_manager, TemplateManager
+from app.services.ai_adapter import get_ai_adapter_service, AiAdapterService
 from app.utils.file_handler import get_file_handler, FileHandler
 from app.core.config import settings
 
@@ -341,19 +342,22 @@ async def bulk_upload_resumes(
         raise HTTPException(status_code=500, detail=f"Bulk upload failed: {str(e)}")
 
 
-@router.get("/create-template/{job_id}", response_class=HTMLResponse)
+@router.post("/create-template/{job_id}", response_class=HTMLResponse)
 async def create_resume_template(
     job_id: str,
-    template_id: int = Query(1, ge=1, description="Template ID to use (1=Modern, 2=Clean, 3=Sidebar)"),
+    request: TemplateGenerationRequest,
     extraction_service: LlamaExtractionService = Depends(get_extraction_service),
-    template_manager: TemplateManager = Depends(get_template_manager)
+    template_manager: TemplateManager = Depends(get_template_manager),
+    ai_adapter: AiAdapterService = Depends(get_ai_adapter_service)
 ):
     """
     Generate HTML resume template for a completed extraction job
 
     - **job_id**: Job identifier from upload response
-    - **template_id**: Template to use (1=Modern gradient template, 2=Clean Tailwind template, 3=Modern CV with sidebar)
-    - Returns HTML template populated with candidate data
+    - **request**: Template generation request containing template_id and optional job_description
+      - **template_id**: Template to use (1=Modern gradient template, 2=Clean Tailwind template, 3=Modern CV with sidebar)
+      - **job_description**: Optional job description to tailor the resume content to the specific role using AI
+    - Returns HTML template populated with candidate data (optionally AI-tailored)
     """
     try:
         # Get job status
@@ -401,11 +405,29 @@ async def create_resume_template(
                 "frameworks": job.extracted_data.technical_skills.frameworks,
                 "skills": job.extracted_data.technical_skills.skills
             },
-            "key_accomplishments": job.extracted_data.key_accomplishments
+            "key_accomplishments": job.extracted_data.key_accomplishments,
+            # Add additional fields that templates might need
+            "title": getattr(job.extracted_data, "title", None) or "Professional",
+            "location": getattr(job.extracted_data, "location", None) or "City, Country",
+            "phone": getattr(job.extracted_data, "phone", None) or "+00 0000 000000",
+            "portfolio_url": getattr(job.extracted_data, "portfolio_url", None) or "#",
+            "github_url": getattr(job.extracted_data, "github_url", None) or "#",
+            "languages": getattr(job.extracted_data, "languages", None) or []
         }
 
+        # Apply AI tailoring if job description is provided
+        if request.job_description and request.job_description.strip():
+            logger.info(f"Applying AI tailoring for job_id: {job_id}")
+            try:
+                candidate_data = ai_adapter.tailor_candidate(candidate_data, request.job_description)
+                logger.info("AI tailoring completed successfully")
+            except Exception as e:
+                logger.warning(f"AI tailoring failed, using original data: {e}")
+        else:
+            logger.info("No job description provided, skipping AI tailoring")
+
         # Generate HTML template using template manager
-        html_content = template_manager.get_template(template_id, candidate_data)
+        html_content = template_manager.get_template(request.template_id, candidate_data)
 
         return HTMLResponse(content=html_content, status_code=200)
 
@@ -430,6 +452,27 @@ async def get_available_templates(
     except Exception as e:
         logger.error(f"Failed to get templates: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get templates: {str(e)}")
+
+
+@router.get("/ai-adapter/status")
+async def get_ai_adapter_status(
+    ai_adapter: AiAdapterService = Depends(get_ai_adapter_service)
+):
+    """
+    Get AI adapter service status and configuration
+    
+    Returns information about OpenAI integration availability
+    """
+    try:
+        status = ai_adapter.get_status()
+        return {
+            "ai_tailoring_available": ai_adapter.is_available(),
+            "status": status,
+            "message": "AI tailoring ready" if ai_adapter.is_available() else "AI tailoring not available"
+        }
+    except Exception as e:
+        logger.error(f"Failed to get AI adapter status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get AI adapter status: {str(e)}")
 
 
 @router.delete("/resume/{job_id}")

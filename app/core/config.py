@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     LLAMA_EXTRACT_AGENT_NAME: str = "resume-screening"
     LLAMA_EXTRACT_TIMEOUT: int = 300  # 5 minutes
     
+    # OpenAI Settings (for AI-powered resume tailoring)
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    
     # File Upload Settings
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_FILE_EXTENSIONS: List[str] = [".pdf", ".docx", ".doc", ".txt"]

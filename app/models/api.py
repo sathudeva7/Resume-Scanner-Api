@@ -19,6 +19,12 @@ class ExtractionRequest(BaseModel):
     job_id: str = Field(description="Job ID from upload response")
 
 
+class TemplateGenerationRequest(BaseModel):
+    """Request to generate resume template with optional AI tailoring"""
+    template_id: int = Field(ge=1, description="Template ID to use (1=Modern, 2=Clean, 3=Sidebar)")
+    job_description: Optional[str] = Field(default=None, description="Optional job description to tailor the resume to the specific role")
+
+
 class ExtractionResponse(BaseModel):
     """Response for extraction request"""
     job_id: str = Field(description="Job identifier")

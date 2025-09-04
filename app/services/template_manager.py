@@ -52,6 +52,18 @@ class TemplateManager:
         # Generate experience HTML
         experience_html = ""
         for exp in candidate_data.get("experience", []):
+            # Handle both string and list formats for description
+            description = exp.get('description', '')
+            if isinstance(description, list):
+                # If it's a list (bullet points), create a bulleted list
+                desc_html = "<ul class='list-disc list-inside space-y-1 mt-2'>"
+                for bullet in description:
+                    desc_html += f"<li class='text-gray-700'>{bullet}</li>"
+                desc_html += "</ul>"
+            else:
+                # If it's a string, use as paragraph
+                desc_html = f"<p class='experience-description text-gray-700 leading-relaxed'>{description}</p>"
+            
             experience_html += f"""
                         <div data-gjs-type="experience" class="bg-gray-50 rounded-xl p-6 border-l-4 border-primary hover:shadow-lg transition-all duration-300">
                             <div data-gjs-type="no-selection" class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
@@ -63,7 +75,9 @@ class TemplateManager:
                                     {exp.get('start_date', '')} - {exp.get('end_date', 'Present') if exp.get('end_date') else 'Present'}
                                 </div>
                             </div>
-                            <p data-gjs-type="no-selection" class="experience-description text-gray-700 leading-relaxed">{exp.get('description', '')}</p>
+                            <div data-gjs-type="no-selection">
+                                {desc_html}
+                            </div>
                         </div>"""
 
         # Generate education HTML
@@ -347,6 +361,17 @@ class TemplateManager:
             ]
 
         for exp in experiences:
+            # Handle both string and list formats for description
+            description = exp.get('description', '')
+            if isinstance(description, list):
+                # If it's a list (bullet points), create multiple list items
+                desc_items = ""
+                for bullet in description:
+                    desc_items += f'<li data-gjs-type="no-selection">{bullet}</li>'
+            else:
+                # If it's a string, create single list item
+                desc_items = f'<li data-gjs-type="no-selection expe-description">{description}</li>'
+            
             experience_html += f'''
                 <article data-gjs-type="experience">
                   <div data-gjs-type="no-selection" class="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1">
@@ -354,7 +379,7 @@ class TemplateManager:
                     <p data-gjs-type="no-selection" class="experience-dates text-sm text-slate-500">{exp.get('dates', '')}</p>
                   </div>
                   <ul data-gjs-type="no-selection" class="mt-2 list-disc list-outside space-y-1 pl-5 text-[15px] leading-relaxed">
-                    <li data-gjs-type="no-selection expe-description">{exp.get('description', '')}</li>
+                    {desc_items}
                   </ul>
                 </article>'''
 
@@ -512,11 +537,7 @@ class TemplateManager:
           </section>
         </div>
 
-        <!-- Footer / Actions -->
-        <div class="mt-8 flex items-center justify-between print:hidden">
-          <p class="text-xs text-slate-500">Single-file Tailwind resume template. Customize and print to PDF.</p>
-          <button onclick="window.print()" class="px-4 py-2 rounded-lg border border-slate-300 hover:border-slate-400 text-sm">Print / Save PDF</button>
-        </div>
+      
       </section>
     </main>
   </body>
@@ -673,10 +694,10 @@ class TemplateManager:
             education_html += f'''
                 <article data-gjs-type="education" class="flex items-baseline justify-between gap-4">
                   <div data-gjs-type="no-selection">
-                    <h3 data-gjs-type="no-selection" class="font-semibold">{edu.get('degree', '')}</h3>
-                    <p data-gjs-type="no-selection" class="text-[15px] text-slate-700">{edu.get('institution', '')}</p>
+                    <h3 data-gjs-type="no-selection" class="education-degree font-semibold">{edu.get('degree', '')}</h3>
+                    <p data-gjs-type="no-selection" class="education-institution text-[15px] text-slate-700">{edu.get('institution', '')}</p>
                   </div>
-                  <p data-gjs-type="no-selection" class="text-sm text-sky-600">{edu.get('dates', '')}</p>
+                  <p data-gjs-type="no-selection" class="education-dates text-sm text-sky-600">{edu.get('dates', '')}</p>
                 </article>'''
 
         html_template = f'''<!DOCTYPE html>
@@ -693,26 +714,26 @@ class TemplateManager:
   </head>
   <body class="bg-slate-100 text-slate-800 antialiased">
     <main class="mx-auto max-w-4xl md:my-10 p-0">
-      <section class="bg-white shadow-lg rounded-2xl overflow-hidden print:shadow-none print:rounded-none">
+      <section data-gjs-type="no-selection" class="bg-white shadow-lg rounded-2xl overflow-hidden print:shadow-none print:rounded-none">
         <!-- Top band (accent) -->
-        <div class="h-2 w-full bg-sky-500"></div>
+        <div data-gjs-type="no-selection" class="h-2 w-full bg-sky-500"></div>
 
-        <div class="grid grid-cols-12 gap-0">
+        <div data-gjs-type="no-selection" class="grid grid-cols-12 gap-0">
           <!-- Sidebar -->
-          <aside class="col-span-12 md:col-span-4 bg-slate-50 md:border-r border-slate-200 p-8">
+          <aside data-gjs-type="sidebar" class="col-span-12 md:col-span-4 bg-slate-50 md:border-r border-slate-200 p-8">
             <!-- Photo -->
             <div class="w-40 h-40 mx-auto rounded-full overflow-hidden ring-4 ring-white shadow mb-6">
               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" alt="Profile photo" class="w-full h-full object-cover" />
             </div>
 
             <!-- Contact -->
-            <section class="space-y-2">
+            <section data-gjs-type="no-selection" class="space-y-2">
               <h2 class="text-xs tracking-[0.2em] font-semibold text-slate-500">CONTACT</h2>
-              <ul class="mt-3 space-y-2 text-sm">
-                <li class="flex gap-3"><span class="i">📞</span><span>{phone}</span></li>
-                <li class="flex gap-3"><span class="i">✉️</span><a class="underline decoration-slate-300" href="mailto:{email}">{email}</a></li>
-                <li class="flex gap-3"><span class="i">🌐</span><a class="underline decoration-slate-300" href="{portfolio_link}">portfolio.example</a></li>
-                <li class="flex gap-3"><span class="i">📍</span><span>{location}</span></li>
+              <ul  class="mt-3 space-y-2 text-sm">
+                <li data-gjs-type="no-selection" class="flex gap-3"><span class="i">📞</span><span>{phone}</span></li>
+                <li data-gjs-type="no-selection" class="flex gap-3"><span class="i">✉️</span><a class="underline decoration-slate-300" href="mailto:{email}">{email}</a></li>
+                <li data-gjs-type="no-selection" class="flex gap-3"><span class="i">🌐</span><a class="underline decoration-slate-300" href="{portfolio_link}">portfolio.example</a></li>
+                <li data-gjs-type="no-selection" class="flex gap-3"><span class="i">📍</span><span>{location}</span></li>
               </ul>
             </section>
 
@@ -777,10 +798,7 @@ class TemplateManager:
               <p class="mt-3 text-[15px] text-slate-700">Available upon request.</p>
             </section>
 
-            <!-- Footer actions -->
-            <div class="mt-10 flex justify-end print:hidden">
-              <button onclick="window.print()" class="px-4 py-2 rounded-lg border border-slate-300 hover:border-slate-400 text-sm">Print / Save PDF</button>
-            </div>
+      
           </section>
         </div>
       </section>
