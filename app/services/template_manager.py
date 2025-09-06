@@ -370,7 +370,7 @@ class TemplateManager:
                     desc_items += f'<li data-gjs-type="no-selection">{bullet}</li>'
             else:
                 # If it's a string, create single list item
-                desc_items = f'<li data-gjs-type="no-selection expe-description">{description}</li>'
+                desc_items = f'<li data-gjs-type="no-selection">{description}</li>'
             
             experience_html += f'''
                 <article data-gjs-type="experience">
@@ -407,10 +407,10 @@ class TemplateManager:
             education_html += f'''
                 <article data-gjs-type="education">
                   <div data-gjs-type="no-selection" class="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1">
-                    <h3 data-gjs-type="no-selection" class="font-semibold">{edu.get('degree', '')}</h3>
-                    <p data-gjs-type="no-selection" class="text-sm text-slate-500">{edu.get('dates', '')}</p>
+                    <h3 data-gjs-type="no-selection" class="education-degree font-semibold">{edu.get('degree', '')}</h3>
+                    <p data-gjs-type="no-selection" class="education-dates text-sm text-slate-500">{edu.get('dates', '')}</p>
                   </div>
-                  <p data-gjs-type="no-selection" class="text-[15px] text-slate-700 mt-1">{edu.get('gpa', '')}</p>
+                  <p data-gjs-type="no-selection" class="education-institution text-[15px] text-slate-700 mt-1">{edu.get('gpa', '')}</p>
                 </article>'''
 
         # Generate projects HTML
